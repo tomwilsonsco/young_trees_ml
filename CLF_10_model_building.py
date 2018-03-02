@@ -32,15 +32,16 @@ def balance_data(X_train, y_train, X_valid, y_valid, X_test, y_test):
 def build_train_test_data(df, target_col, balanced=False, train_valid_split=0.3):
     train_ids = df[df['Train_Flag']]['Polygon_id'].unique()
     train_ids, valid_ids = train_test_split(train_ids, test_size = train_valid_split)
-    X_train = df[df['Polygon_id'].isin(train_ids)].drop(['Polygon_id','Local_Filepath', 'Train_Flag', target_col], axis=1)
+    #TW had to add 'Woodland_Class' to drop fields list
+    X_train = df[df['Polygon_id'].isin(train_ids)].drop(['Woodland_Class','Polygon_id','Local_Filepath', 'Train_Flag', target_col], axis=1)
     X_train = np.apply_along_axis(lambda x: np.hstack(x), 1, X_train.values)
     y_train = df[df['Polygon_id'].isin(train_ids)].loc[df['Train_Flag'], target_col].astype('float').values
 
-    X_valid = df[df['Polygon_id'].isin(valid_ids)].drop(['Polygon_id','Local_Filepath', 'Train_Flag', target_col], axis=1)
+    X_valid = df[df['Polygon_id'].isin(valid_ids)].drop(['Woodland_Class','Polygon_id','Local_Filepath', 'Train_Flag', target_col], axis=1)
     X_valid = np.apply_along_axis(lambda x: np.hstack(x), 1, X_valid.values)
     y_valid = df[df['Polygon_id'].isin(valid_ids)].loc[df['Train_Flag'], target_col].astype('float').values
 
-    test = df[~df['Train_Flag']].drop(['Polygon_id','Local_Filepath', 'Train_Flag', target_col], axis=1)
+    test = df[~df['Train_Flag']].drop(['Woodland_Class','Polygon_id','Local_Filepath', 'Train_Flag', target_col], axis=1)
     X_test = np.apply_along_axis(lambda x: np.hstack(x), 1, test.values)
     #X_test = np.array(df[~df['Train_Flag']].drop(['Local_Filepath', 'Train_Flag', target_col], axis=1).values)
     y_test = df.loc[~df['Train_Flag'], target_col].astype('float').values
@@ -69,6 +70,7 @@ def benchmark_model(X_train, y_train, X_test, y_test):
 
 def build_and_score_model(feature_df, model_function, target_column):
     X_train, y_train, X_test, y_test, _, _ = build_train_test_data(feature_df, target_column, train_valid_split=0.3, balanced=True)
+    #Imputer fills out missing values (here using mean can use median)
     imputer = Imputer(strategy='mean',axis=0)
     X_train = imputer.fit_transform(X_train)
     X_test = imputer.transform(X_test)
